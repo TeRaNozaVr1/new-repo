@@ -9,20 +9,11 @@ const calculateSplAmount = (amount) => Math.floor(amount / (TOKEN_PRICE * 1e6));
 
 document.addEventListener("DOMContentLoaded", () => {
     const exchangeBtn = document.getElementById("exchangeBtn");
-    const PHANTOM_DEEPLINK = "https://phantom.app/ul/browse/";
-
-    // Перевірка чи сайт відкритий у Phantom
-    const isPhantomBrowser = navigator.userAgent.includes("Phantom");
-
-    if (!isPhantomBrowser) {
-        // Перенаправляємо користувача у Phantom-гаманець
-        window.location.href = PHANTOM_DEEPLINK + encodeURIComponent(window.location.href);
-    }
 
     // Перевірка наявності підключення через Phantom
     const checkPhantomConnection = async () => {
         if (!window.solana) {
-            alert("Phantom гаманець не підключено. Будь ласка, встановіть Phantom або відкрийте сайт через Phantom.");
+            alert("Phantom гаманець не підключено. Будь ласка, встановіть Phantom або підключіться до нього.");
             return false;
         }
         try {
@@ -92,4 +83,3 @@ document.addEventListener("DOMContentLoaded", () => {
         }
     });
 });
-
