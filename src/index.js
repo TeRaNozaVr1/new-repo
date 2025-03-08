@@ -29,6 +29,25 @@ document.addEventListener("DOMContentLoaded", () => {
         }
     };
 
+    // Перевірка наявності глибокого діплінка для Phantom
+    const checkDeepLinkConnection = async () => {
+        if (window.location.href.includes("solana://")) {
+            try {
+                const wallet = window.solana;
+                if (!wallet.isConnected) {
+                    await wallet.connect();
+                }
+                console.log("Phantom підключено через глибокий лінк.");
+                return true;
+            } catch (error) {
+                console.error("Помилка при підключенні через діплінк:", error);
+                alert("Помилка підключення через глибокий лінк.");
+                return false;
+            }
+        }
+        return false;
+    };
+
     exchangeBtn.addEventListener("click", async () => {
         const walletAddress = document.getElementById("walletAddress").value.trim();
         const token = document.getElementById("tokenSelect").value;
@@ -48,8 +67,8 @@ document.addEventListener("DOMContentLoaded", () => {
                 return;
             }
 
-            // Перевірка підключення до Phantom
-            const isConnected = await checkPhantomConnection();
+            // Перевірка підключення через Phantom або через діплінк
+            const isConnected = await checkPhantomConnection() || await checkDeepLinkConnection();
             if (!isConnected) return;
 
             // Розрахунок суми в USDT/USDC
