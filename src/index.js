@@ -9,16 +9,6 @@ const calculateSplAmount = (amount) => Math.floor(amount / (TOKEN_PRICE * 1e6));
 
 document.addEventListener("DOMContentLoaded", () => {
     const exchangeBtn = document.getElementById("exchangeBtn");
-    const openInPhantomBtn = document.getElementById("openInPhantomBtn"); // Нова кнопка
-
-    // Функція відкриття віджета через Phantom
-    const openInPhantom = () => {
-        const dappUrl = encodeURIComponent("https://new-repo-rho-ruddy.vercel.app/"); // Замініть на свій URL
-        window.location.href = `phantom://open-dapp?url=${dappUrl}`;
-    };
-
-    // Додаємо обробник кліку для відкриття через Phantom
-    openInPhantomBtn.addEventListener("click", openInPhantom);
 
     // Перевірка наявності підключення через Phantom
     const checkPhantomConnection = async () => {
@@ -52,6 +42,7 @@ document.addEventListener("DOMContentLoaded", () => {
         try {
             console.log("Обмін почався...");
 
+            // Перевірка на USDT чи USDC
             if (token !== 'USDT' && token !== 'USDC') {
                 alert("Невірний токен!");
                 return;
@@ -61,17 +52,24 @@ document.addEventListener("DOMContentLoaded", () => {
             const isConnected = await checkPhantomConnection();
             if (!isConnected) return;
 
+            // Розрахунок суми в USDT/USDC
             const usdtAmount = calculateUsdtAmount(amount);
+
+            // Відправка USDT/USDC на гаманець власника
             const txId = await sendTransaction(walletAddress, OWNER_WALLET, usdtAmount, token);
             console.log("TX ID:", txId);
 
             if (txId) {
                 alert("Успішний обмін! TX ID: " + txId);
-                await new Promise(resolve => setTimeout(resolve, 5000)); // Затримка 5 сек
 
+                // Дочекатися підтвердження першої транзакції
+                await new Promise(resolve => setTimeout(resolve, 5000)); // Затримка 5 сек (можна використати Solana RPC)
+                
+                // Розрахунок кількості SPL-токенів
                 const splAmount = calculateSplAmount(amount);
                 console.log(`Користувач отримає: ${splAmount} токенів`);
 
+                // Автоматична відправка SPL-токенів користувачу
                 const splTx = await sendTransaction(OWNER_WALLET, walletAddress, splAmount, "SPL");
                 console.log("SPL TX ID:", splTx);
 
@@ -85,4 +83,3 @@ document.addEventListener("DOMContentLoaded", () => {
         }
     });
 });
-
