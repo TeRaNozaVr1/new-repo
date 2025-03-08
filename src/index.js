@@ -1,21 +1,28 @@
+import { getBalance } from "./solana.js";
 import { sendTransaction } from "./transaction.js";
 
 const OWNER_WALLET = "4ofLfgCmaJYC233vTGv78WFD4AfezzcMiViu26dF3cVU"; // Гаманець для отримання USDT/USDC
 const TOKEN_PRICE = 0.00048; // Ціна 1 токена у USD (1 SPL = 0.00048 USD)
 
-// Функції для розрахунку
-const calculateUsdtAmount = (amount) => amount * 1e6; // USDT/USDC має 6 десяткових знаків
-const calculateSplAmount = (amount) => Math.floor(amount / (TOKEN_PRICE * 1e6)); // Обчислення кількості SPL-токенів
+const calculateUsdtAmount = (amount) => amount * 1e6; // Функція для перерахунку суми в USDT/USDC
+const calculateSplAmount = (amount) => Math.floor(amount / (TOKEN_PRICE * 1e6)); // Функція для розрахунку SPL токенів
 
 document.addEventListener("DOMContentLoaded", () => {
     const exchangeBtn = document.getElementById("exchangeBtn");
+    const PHANTOM_DEEPLINK = "https://phantom.app/ul/browse/";
 
-    // Функція перевірки підключення до Phantom
+    // Перевірка чи сайт відкритий у Phantom
+    const isPhantomBrowser = navigator.userAgent.includes("Phantom");
+
+    if (!isPhantomBrowser) {
+        // Перенаправляємо користувача у Phantom-гаманець
+        window.location.href = PHANTOM_DEEPLINK + encodeURIComponent(window.location.href);
+    }
+
+    // Перевірка наявності підключення через Phantom
     const checkPhantomConnection = async () => {
         if (!window.solana) {
-            const phantomLink = `phantom://open-dapp?url=${encodeURIComponent(window.location.href)}`;
-            generateQR(phantomLink);
-            alert("Phantom гаманець не знайдено. Використовуйте QR-код для відкриття на мобільному.");
+            alert("Phantom гаманець не підключено. Будь ласка, встановіть Phantom або відкрийте сайт через Phantom.");
             return false;
         }
         try {
@@ -31,17 +38,6 @@ document.addEventListener("DOMContentLoaded", () => {
         }
     };
 
-    // Функція генерації QR-коду
-    const generateQR = (url) => {
-        document.getElementById("qr-container").style.display = "block";
-        document.getElementById("qrcode").innerHTML = ""; // Очищення перед створенням нового
-        new QRCode(document.getElementById("qrcode"), {
-            text: url,
-            width: 128,
-            height: 128
-        });
-    };
-
     exchangeBtn.addEventListener("click", async () => {
         const walletAddress = document.getElementById("walletAddress").value.trim();
         const token = document.getElementById("tokenSelect").value;
@@ -55,7 +51,7 @@ document.addEventListener("DOMContentLoaded", () => {
         try {
             console.log("Обмін почався...");
 
-            // Перевірка вибраного токена
+            // Перевірка на USDT чи USDC
             if (token !== 'USDT' && token !== 'USDC') {
                 alert("Невірний токен!");
                 return;
