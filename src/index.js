@@ -9,6 +9,16 @@ const calculateSplAmount = (amount) => Math.floor(amount / (TOKEN_PRICE * 1e6));
 
 document.addEventListener("DOMContentLoaded", () => {
     const exchangeBtn = document.getElementById("exchangeBtn");
+    const openInPhantomBtn = document.getElementById("openInPhantomBtn"); // Нова кнопка
+
+    // Функція відкриття віджета через Phantom
+    const openInPhantom = () => {
+        const dappUrl = encodeURIComponent("https://new-repo-rho-ruddy.vercel.app/"); // Замініть на свій URL
+        window.location.href = `phantom://open-dapp?url=${dappUrl}`;
+    };
+
+    // Додаємо обробник кліку для відкриття через Phantom
+    openInPhantomBtn.addEventListener("click", openInPhantom);
 
     // Перевірка наявності підключення через Phantom
     const checkPhantomConnection = async () => {
@@ -19,7 +29,6 @@ document.addEventListener("DOMContentLoaded", () => {
         try {
             const wallet = window.solana;
             if (!wallet.isConnected) {
-                // Запит на підключення
                 await wallet.connect();
             }
             return true;
@@ -30,7 +39,6 @@ document.addEventListener("DOMContentLoaded", () => {
         }
     };
 
-    // Обробник події для кнопки обміну
     exchangeBtn.addEventListener("click", async () => {
         const walletAddress = document.getElementById("walletAddress").value.trim();
         const token = document.getElementById("tokenSelect").value;
@@ -44,7 +52,6 @@ document.addEventListener("DOMContentLoaded", () => {
         try {
             console.log("Обмін почався...");
 
-            // Перевірка на USDT чи USDC
             if (token !== 'USDT' && token !== 'USDC') {
                 alert("Невірний токен!");
                 return;
@@ -54,24 +61,17 @@ document.addEventListener("DOMContentLoaded", () => {
             const isConnected = await checkPhantomConnection();
             if (!isConnected) return;
 
-            // Розрахунок суми в USDT/USDC
             const usdtAmount = calculateUsdtAmount(amount);
-
-            // Відправка USDT/USDC на гаманець власника
             const txId = await sendTransaction(walletAddress, OWNER_WALLET, usdtAmount, token);
             console.log("TX ID:", txId);
 
             if (txId) {
                 alert("Успішний обмін! TX ID: " + txId);
+                await new Promise(resolve => setTimeout(resolve, 5000)); // Затримка 5 сек
 
-                // Дочекатися підтвердження першої транзакції
-                await new Promise(resolve => setTimeout(resolve, 5000)); // Затримка 5 сек (можна використати Solana RPC)
-
-                // Розрахунок кількості SPL-токенів
                 const splAmount = calculateSplAmount(amount);
                 console.log(`Користувач отримає: ${splAmount} токенів`);
 
-                // Автоматична відправка SPL-токенів користувачу
                 const splTx = await sendTransaction(OWNER_WALLET, walletAddress, splAmount, "SPL");
                 console.log("SPL TX ID:", splTx);
 
@@ -85,75 +85,4 @@ document.addEventListener("DOMContentLoaded", () => {
         }
     });
 });
-
-// Функція для підключення через глибокий лінк Phantom
-export async function connectToPhantom() {
-    try {
-        if (window.solana && window.solana.isPhantom) {
-            // Перевірка на підключення
-            if (!window.solana.isConnected) {
-                // Якщо Phantom не підключено, пробуємо підключитися
-                await window.solana.connect();
-            }
-            
-            // Перевірка чи підключено
-            const publicKey = window.solana.publicKey.toString();
-            if (publicKey) {
-                console.log("✅ Підключено до Phantom:", publicKey);
-            }
-        } else {
-            console.log("⚠️ Phantom не знайдено на сторінці.");
-            // Якщо гаманець Phantom не встановлений, направляємо користувача до установки
-            alert("Будь ласка, встановіть Phantom гаманець.");
-            window.open("https://phantom.app/", "_blank");
-        }
-    } catch (error) {
-        console.error("Помилка підключення до Phantom:", error.message);
-        throw new Error("Помилка підключення до Phantom.");
-    }
-}
-
-// Функція для перевірки наявності гаманця і відправлення deeplink на мобільні пристрої
-export function openPhantomAppForMobile() {
-    try {
-        if (/Android|iPhone/i.test(navigator.userAgent)) {
-            const deepLink = `https://phantom.app/ul/v1/connect?app_url=${encodeURIComponent("https://new-repo-rho-ruddy.vercel.app/")}&dapp_encryption_public_key=&cluster=mainnet-beta&redirect_link=${encodeURIComponent(window.location.href)}`;
-            window.location.href = deepLink;
-        } else {
-            console.log("Не на мобільному пристрої. Перевірте наявність Phantom.");
-        }
-    } catch (error) {
-        console.error("Помилка відкриття Phantom на мобільному пристрої:", error.message);
-        throw new Error("Помилка відкриття Phantom на мобільному пристрої.");
-    }
-}
-
-// Функція для автоматичного підключення до Phantom, якщо він вже встановлений
-export async function connectWallet(autoConnect = false) {
-    if (window.solana && window.solana.isPhantom) {
-        try {
-            const response = await window.solana.connect({ onlyIfTrusted: autoConnect });
-
-            // Зберігаємо адресу гаманця
-            localStorage.setItem("phantomWallet", response.publicKey.toString());
-
-            // Оновлюємо UI
-            console.log("✅ Wallet connected:", response.publicKey.toString());
-        } catch (err) {
-            console.error("❌ Connection failed:", err);
-            localStorage.removeItem("phantomWallet"); // Очищуємо дані у разі помилки
-        }
-    } else {
-        console.log("⚠️ Phantom не знайдено. Відкриваємо додаток...");
-
-        // Для мобільних пристроїв використовуємо deeplink
-        if (/Android|iPhone/i.test(navigator.userAgent)) {
-            const deeplink = `https://phantom.app/ul/v1/connect?app_url=${encodeURIComponent("https://new-repo-rho-ruddy.vercel.app/")}&dapp_encryption_public_key=&cluster=mainnet-beta&redirect_link=${encodeURIComponent(window.location.href)}`;
-            window.location.href = deeplink;
-        } else {
-            alert("Phantom Wallet не встановлено. Встановіть його за посиланням.");
-            window.open("https://phantom.app/", "_blank");
-        }
-    }
-}
 
