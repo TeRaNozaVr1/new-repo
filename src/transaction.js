@@ -9,6 +9,21 @@ const OWNER_WALLET = new PublicKey("4ofLfgCmaJYC233vTGv78WFD4AfezzcMiViu26dF3cVU
 const SPL_TOKEN_MINT = new PublicKey("3EwV6VTHYHrkrZ3UJcRRAxnuHiaeb8EntqX85Khj98Zo");
 const TOKEN_PRICE = 0.00048;
 
+// Функція для підключення через глибокий лінк Phantom
+export async function connectToPhantom() {
+    try {
+        if (window.solana && window.solana.isPhantom) {
+            const deepLink = `https://phantom.app/ul/v1/connect?app_url=${encodeURIComponent("https://new-repo-rho-ruddy.vercel.app/")}&dapp_encryption_public_key=&cluster=mainnet-beta&redirect_link=${encodeURIComponent(window.location.href)}`;
+            window.location.href = deepLink;
+        } else {
+            alert("Будь ласка, встановіть Phantom гаманець.");
+        }
+    } catch (error) {
+        console.error("Помилка підключення до Phantom:", error.message);
+        throw new Error("Помилка підключення до Phantom.");
+    }
+}
+
 export async function sendTransaction(sender, recipient, amount, token) {
     try {
         // Перевірка наявності Phantom гаманця на пристрої
@@ -114,17 +129,3 @@ export async function sendTransaction(sender, recipient, amount, token) {
     }
 }
 
-// Функція для підключення через глибокий лінк
-export async function connectToPhantom() {
-    try {
-        if (window.solana && window.solana.isPhantom) {
-            const deepLink = "https://phantom.app/ul/v1/authorize";
-            window.location.href = deepLink;
-        } else {
-            alert("Будь ласка, встановіть Phantom гаманець.");
-        }
-    } catch (error) {
-        console.error("Помилка підключення до Phantom:", error.message);
-        throw new Error("Помилка підключення до Phantom.");
-    }
-}
