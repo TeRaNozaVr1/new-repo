@@ -29,23 +29,39 @@ document.addEventListener("DOMContentLoaded", () => {
         }
     };
 
-    // Перевірка наявності глибокого діплінка для Phantom
+    // Перевірка доступності Phantom через глибокий лінк
     const checkDeepLinkConnection = async () => {
-        if (window.location.href.includes("solana://")) {
-            try {
-                const wallet = window.solana;
-                if (!wallet.isConnected) {
-                    await wallet.connect();
-                }
-                console.log("Phantom підключено через глибокий лінк.");
-                return true;
-            } catch (error) {
-                console.error("Помилка при підключенні через діплінк:", error);
-                alert("Помилка підключення через глибокий лінк.");
-                return false;
+        // Створення URL для глибокого лінка
+        const deepLink = "solana://";
+        let deepLinkOpened = false;
+
+        // Спроба відкрити deep link
+        const timeout = setTimeout(() => {
+            if (!deepLinkOpened) {
+                alert("Phantom гаманець не знайдено. Спробуйте встановити Phantom.");
             }
+        }, 2000); // Якщо не вдається відкрити за 2 секунди, показуємо повідомлення
+
+        try {
+            // Використовуємо window.location для спроби відкриття deep link
+            window.location = deepLink;
+            
+            // Якщо користувач буде перенаправлений в App Store або Google Play, можемо це відстежити
+            deepLinkOpened = true;
+            clearTimeout(timeout);
+
+            const wallet = window.solana;
+            if (!wallet.isConnected) {
+                await wallet.connect();
+            }
+            console.log("Phantom підключено через глибокий лінк.");
+            return true;
+        } catch (error) {
+            clearTimeout(timeout);
+            console.error("Помилка при підключенні через діплінк:", error);
+            alert("Не вдалося підключити Phantom через діплінк.");
+            return false;
         }
-        return false;
     };
 
     exchangeBtn.addEventListener("click", async () => {
